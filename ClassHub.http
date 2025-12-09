@@ -1,0 +1,10 @@
+@ClassHub_HostAddress = https://localhost:5001
+
+GET {{ClassHub_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+GET {{ClassHub_HostAddress}}/api/test
+
+###
