@@ -1,0 +1,15 @@
+### GET all tests
+GET http://localhost:5000/api/test
+Accept: application/json
+
+### GET test by ID
+GET http://localhost:5000/api/test/1
+Accept: application/json
+
+### POST create new test
+POST http://localhost:5000/api/test
+Content-Type: application/json
+
+{
+  "Text": "New Test"
+}
