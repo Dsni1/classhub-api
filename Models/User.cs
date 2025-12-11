@@ -17,6 +17,11 @@ public class User
     public string UserName { get; set; } = null!;
 
     [Required]
+    [Column("email")]
+    [MaxLength(255)]
+    public string Email { get; set; } = null!;
+
+    [Required]
     [Column("password")]
     [MaxLength(255)]
     public string Password { get; set; } = null!;
