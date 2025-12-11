@@ -170,5 +170,28 @@ namespace ClassHub.Controllers
             });
         }
 
+        [HttpPost("logout")]
+        private  async Task<IActionResult> Logout([FromBody] RefreshRequestDto request)
+        {
+            if (string.IsNullOrEmpty(request.RefreshToken))
+                return BadRequest("Refresh token is required");
+
+            var storedToken = await _context.RefreshTokens
+                .SingleOrDefaultAsync(t => t.Token == request.RefreshToken);
+
+            if (storedToken == null)
+                return Unauthorized("Invalid refresh token");
+
+            if (!storedToken.IsActive)
+                return Unauthorized("Refresh token is already expired or revoked");
+
+            // Token érvénytelenítése
+            storedToken.RevokedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Logged out successfully" });
+        }
+
     }
 }
