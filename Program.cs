@@ -67,7 +67,7 @@ app.Run();
 //3.
 //4.dassda
 //5.
-//6.
+//6.asdsad
 //7.asdutolsó
 //8.+2
 //9.
