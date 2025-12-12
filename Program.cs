@@ -67,20 +67,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-// test deploy
-// test deploy
-//3.
-//4.dassda
-//5.dassadsa
-//6.asdsad
-//7.asdutolsó
-//8.+2
-//9.
-//10asd
-//11
-//11
-//12asdasdsad
-//13
-//14sadasdsadsa
-//15,migrationstest
-//test1
