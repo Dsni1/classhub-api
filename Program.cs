@@ -75,6 +75,8 @@ builder.Services.AddControllers();
 // Build app
 var app = builder.Build();
 
+app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
