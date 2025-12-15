@@ -32,7 +32,7 @@ namespace ClassHub.Controllers
         {
             var currentUserId = int.Parse(User.FindFirstValue("userId")!);
 
-            // 1️⃣ Jogosultság: Owner vagy Admin?
+            // Jogosultság
             var canInvite = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .AnyAsync(ur =>
@@ -44,7 +44,7 @@ namespace ClassHub.Controllers
             if (!canInvite)
                 return Forbid("Nincs jogosultság meghívni felhasználókat.");
 
-            // 2️⃣ Role ellenőrzés
+            // Role ellenőrzés
             var role = await _context.Roles
                 .FirstOrDefaultAsync(r => r.Id == dto.RoleId);
 
@@ -53,14 +53,13 @@ namespace ClassHub.Controllers
 
             try
             {
-                // 3️⃣ Invite létrehozása
+                // Invite létrehozása
                 var token = await _inviteService.CreateInviteAsync(
                     orgId,
                     dto.Email,
                     role.Id
                 );
 
-                // 🔜 később: email küldés ide
                 return Ok(new
                 {
                     Message = "Meghívó létrehozva",
