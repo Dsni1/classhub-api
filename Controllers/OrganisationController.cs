@@ -33,7 +33,6 @@ namespace ClassHub.Controllers
             _context.Organisations.Add(org);
             await _context.SaveChangesAsync();
 
-            // 🔥 creator = owner
             var ownerRole = await _context.Roles
                 .FirstAsync(r => r.Name == "Owner");
 
