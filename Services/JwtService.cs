@@ -17,9 +17,9 @@ namespace ClassHub.Services
         public JwtService(IConfiguration config)
         {
             // ENV VARIABLES
-            _key = Environment.GetEnvironmentVariable("JWT_KEY");
-            _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
-            _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+            _key = Environment.GetEnvironmentVariable("JWT_KEY") ?? throw new Exception("JWT_KEY not set");
+            _issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? throw new Exception("JWT_ISSUER not set");
+            _audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? throw new Exception("JWT_AUDIENCE not set");
             _accessMinutes = int.Parse(Environment.GetEnvironmentVariable("ACCESS_TOKEN_MINUTES") ?? "60");
         }
 
@@ -32,7 +32,8 @@ namespace ClassHub.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
-                new Claim("userId", user.Id.ToString())
+                new Claim("userId", user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email)
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key));
