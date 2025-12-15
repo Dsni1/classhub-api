@@ -36,7 +36,16 @@ var dbName = Environment.GetEnvironmentVariable("DB_NAME");
 var dbUser = Environment.GetEnvironmentVariable("DB_USER");
 var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
 
-var connectionString =
+string connectionString;
+
+if (dbHost == null || dbPort == null || dbName == null || dbUser == null || dbPass == null)
+{
+    connectionString = $"Server=127.0.0.1;Database=classhub;User=devnet;Password=X9f!2nP@8dQm4L;Port=3306;Protocol=Tcp;SslMode=None;";
+}
+
+else
+{
+  connectionString =
     $"Server={dbHost};" +
     $"Port={dbPort};" +
     $"Database={dbName};" +
@@ -44,15 +53,23 @@ var connectionString =
     $"Password={dbPass};" +
     $"Protocol=Tcp;" +
     $"SslMode=None;";
+  
+}
 
+var dbVersionString =builder.Configuration["Database:Version"];
+
+var serverVersion = ServerVersion.Parse(dbVersionString);
+
+Console.WriteLine("Using connection string: " + connectionString);
 
 builder.Services.AddDbContext<ExternalDbContext>(options =>
 {
-    options.UseMySql(connectionString, new MariaDbServerVersion(new Version(11,0)));
+    options.UseMySql(connectionString, serverVersion);
 });
 
 // Add services to the container.
 builder.Services.AddScoped<ClassHub.Services.JwtService>();
+builder.Services.AddScoped<ClassHub.Services.OrganisationInviteService>();
 builder.Services.AddControllers();
 
 // Build app

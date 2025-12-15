@@ -20,6 +20,8 @@ namespace ClassHub.Data
         public DbSet<ChatRoomUser> ChatRoomUsers { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<OrganisationInvite> OrganisationInvites { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -87,6 +89,13 @@ namespace ClassHub.Data
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Email)
                 .IsUnique();
+
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = 1, Name = "Owner" },
+                new Role { Id = 2, Name = "Admin" },
+                new Role { Id = 3, Name = "Member" }
+);
+
 
         }
 
