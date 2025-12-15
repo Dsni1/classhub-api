@@ -6,7 +6,7 @@ using ClassHub.Data;
 using ClassHub.Models;
 using ClassHub.DTOs;
 
-namespace Classhub.Controllers
+namespace ClassHub.Controllers
 {
     [ApiController]
     [Route("api")]
