@@ -22,24 +22,18 @@ namespace ClassHub.Data
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<OrganisationInvite> OrganisationInvites { get; set; }
 
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // UserRole composite key
             modelBuilder.Entity<UserRole>()
                 .HasKey(ur => new { ur.UserId, ur.RoleId, ur.OrganisationId });
 
-            // GroupUser composite key
             modelBuilder.Entity<GroupUser>()
                 .HasKey(gu => new { gu.GroupId, gu.UserId });
 
-            // ChatRoomUser composite key
             modelBuilder.Entity<ChatRoomUser>()
                 .HasKey(cru => new { cru.ChatRoomId, cru.UserId });
-
-            // kapcsolatok példák:
 
             modelBuilder.Entity<UserRole>()
                 .HasOne(ur => ur.User)
@@ -76,7 +70,6 @@ namespace ClassHub.Data
                 .WithMany(u => u.ChatRoomUsers)
                 .HasForeignKey(cru => cru.UserId);
 
-            // RefreshToken – már DataAnnotation-nel is be van lőve, itt elég ennyi:
             modelBuilder.Entity<RefreshToken>()
                 .HasOne(rt => rt.User)
                 .WithMany(u => u.RefreshTokens)
@@ -94,11 +87,7 @@ namespace ClassHub.Data
                 new Role { Id = 1, Name = "Owner" },
                 new Role { Id = 2, Name = "Admin" },
                 new Role { Id = 3, Name = "Member" }
-);
-
-
+            );
         }
-
-        
     }
 }
