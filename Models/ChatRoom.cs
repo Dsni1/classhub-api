@@ -20,4 +20,5 @@ public class ChatRoom
 
     [Column("group_id")]
     public int? GroupId { get; set; }
+    public ICollection<ChatRoomUser>? ChatRoomUsers { get; set; }
 }

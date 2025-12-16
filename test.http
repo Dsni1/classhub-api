@@ -1,49 +1,82 @@
-### POST createUser: OK
-POST http://localhost:8080/api/users
-content-type: application/json
-
-{
-    "UserName": "teszt1",
-    "Password": "teszt1"
-}
-
-### POST login: OK
-POST http://localhost:5000/api/auth/login
-content-type: application/json
-
-{
-    "User_name": "admin",
-    "Password": "admin123"
-}
-
-
-### POST login: Not OK
-POST http://localhost:5000/api/auth/login
-content-type: application/json
-
-{
-    "User_name": "admin",
-    "Password": "admin"
-}
-
-### GET users: OK
-GET http://5.38.136.63:8080/api/users
-Authorization: application/json
-
-
-### POST login: OK
-POST http://localhost:8080/api/auth/login
+### Regisztráció
+POST http://5.38.136.63:8080/api/register
 Content-Type: application/json
 
 {
-  "userName": "teszt1",
-  "password": "teszt1"
+    "userName": "adminuser",
+    "email": "adminuser@example.com",
+    "password": "Test1234!",
+    "rememberMe": true
 }
 
-### POST token login: OK
+
+### Bejelentkezés
+POST http://5.38.136.63:8080/api/auth/login
+Content-Type: application/json
+
+{
+    "userName": "adminuser",
+    "password": "Test1234!",
+    "rememberMe": true
+}
+
+
+### Token validálás
 POST http://localhost:8080/api/auth/validate
 Content-Type: application/json
 
 {
-    "Token": "eyJhGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwidW5pcXVlX25hbWUiOiJ0ZXN6dDEiLCJ1c2VySWQiOiI1IiwiZXhwIjoxNzY1NDQ4NTc3LCJpc3MiOiJDbGFzc0h1YiIsImF1ZCI6IkNsYXNzSHViVXNlcnMifQ.sXCXZ60Nkt7ks4gnbjKmPNojB5kI0iWeez2JpBobGYI"
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwidW5pcXVlX25hbWUiOiJkYW5pZWwiLCJ1c2VySWQiOiIyIiwiZXhwIjoxNzY1NDU3MTI5LCJpc3MiOiJjbGFzc2h1Yi1hcGkiLCJhdWQiOiJjbGFzc2h1Yi1jbGllbnQifQ.5miPI41UaZj_6mQqb9kSKDVvItwHLzwF9l6s2SoX6E8"
+}
+
+
+### Token frissítés
+POST http://localhost:8080/api/auth/refresh
+Content-Type: application/json
+
+{
+    "refreshToken": "BhWnK4PyFznoEnfUL/pCAWIpnALXoyw7WUCMDKNFLYl6TAGQxYLSXU2Hx5Obwsf6AvcEFBm7xtTKKzaVnIDhsQ=="
+}
+
+
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwidW5pcXVlX25hbWUiOiJhZG1pbnVzZXIiLCJ1c2VySWQiOiI1IiwiZXhwIjoxNzY1OTA5NDM2LCJpc3MiOiJjbGFzc2h1YiIsImF1ZCI6ImNsYXNzaHViIn0.jn60nN7ab2qm2Znp6LxAPeQl_2E8_td1-hcqLL1Yn8s
+### Szervezet létrehozása
+POST http://5.38.136.63:8080/api/org
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "name": "Tech Corp"
+}
+
+
+
+### Csoport létrehozása szervezeten belül
+POST http://5.38.136.63:8080/api/org/3/groups
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Backend Team"
+}
+
+
+### Felhasználó meghívása szervezetbe
+POST http://localhost:8080/api/org/3/invite
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "email": "daniel@example.com",
+    "roleId": 3
+}
+
+
+### Meghívó elfogadása
+POST http://localhost:8080/api/invite/accept
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+    "token": "Sdm+80maQ6OxzRXlIVy6RD0Qf0ybM0KH6lkyCZKLsvvSbJZ2FTJyvBdO/LF9ThNe"
 }

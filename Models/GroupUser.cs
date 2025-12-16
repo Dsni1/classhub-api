@@ -11,4 +11,7 @@ public class GroupUser
 
     [Column("user_id")]
     public int UserId { get; set; }
+
+    public Group Group { get; set; }
+    public User User { get; set; }
 }

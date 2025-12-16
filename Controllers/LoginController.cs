@@ -6,6 +6,7 @@ using ClassHub.DTOs;
 using Microsoft.AspNetCore.Identity;
 using ClassHub.Services;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace ClassHub.Controllers
@@ -37,6 +38,7 @@ namespace ClassHub.Controllers
             if (user == null)
                 return Unauthorized("Invalid username or password");
 
+            // Verify password
             var result = _passwordHasher.VerifyHashedPassword(
                 user,
                 user.Password,
@@ -46,64 +48,149 @@ namespace ClassHub.Controllers
             if (result == PasswordVerificationResult.Failed)
                 return Unauthorized("Invalid username or password");
 
-            // 🔥 Token generálás
-            var token = _jwtService.GenerateToken(user, request.RememberMe);
+            // Generate JWT
+            var jwtToken = _jwtService.GenerateToken(user, request.RememberMe);
 
-            return Ok(new LoginResponseDto
+            var refreshToken = _jwtService.GenerateRefreshToken(
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                Request.Headers["User-Agent"].ToString()
+            );
+
+            refreshToken.UserId = user.Id;
+
+            // Save refresh token to DB
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
             {
                 UserId = user.Id,
-                Token = token
+                Token = jwtToken,
+                RefreshToken = refreshToken.Token
             });
         }
 
+
         [HttpPost("validate")]
-        public async Task<IActionResult> ValidateToken([FromBody] TokenValidateRequestDto request)
+        public IActionResult ValidateToken([FromBody] TokenValidateRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.Token))
-            {
                 return BadRequest("Token is required");
-            }
 
             try
             {
-                var jwtSection = HttpContext.RequestServices
-                .GetRequiredService<IConfiguration>()
-                .GetSection("Jwt");
+                var key = Environment.GetEnvironmentVariable("JWT_KEY");
+                var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+                var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 
-                var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var tokenHandler = new JwtSecurityTokenHandler();
                 var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = jwtSection["Issuer"],
+                    ValidIssuer = issuer,
 
                     ValidateAudience = true,
-                    ValidAudience = jwtSection["Audience"],
+                    ValidAudience = audience,
 
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwtSection["Key"])
+                        Encoding.UTF8.GetBytes(key)
                     ),
 
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
 
-                var principal = tokenHandler.ValidateToken(request.Token, validationParameters, out _);
+                var principal = tokenHandler.ValidateToken(
+                    request.Token,
+                    validationParameters,
+                    out _
+                );
 
-                //valid token
                 var userId = principal.Claims.First(c => c.Type == "userId").Value;
 
                 return Ok(new
                 {
-                    Valid = true,
-                    UserId = userId
-                }
-                );
+                    valid = true,
+                    userId = userId
+                });
             }
-            catch
+            catch (Exception ex)
             {
-                return Unauthorized(new { Valid = false, Message = "Invalid or expired token"});
+                return Unauthorized(new
+                {
+                    valid = false,
+                    message = "Invalid or expired token",
+                    error = ex.Message
+                });
             }
         }
+
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshRequestDto request)
+        {
+            if (string.IsNullOrEmpty(request.RefreshToken))
+                return BadRequest("Refresh token is required");
+
+            var storedToken = await _context.RefreshTokens
+                .Include(t => t.User)
+                .SingleOrDefaultAsync(t => t.Token == request.RefreshToken);
+
+            if (storedToken == null)
+                return Unauthorized("Invalid refresh token");
+
+            if (!storedToken.IsActive)
+                return Unauthorized("Refresh token is expired or revoked");
+
+            // régi token érvénytelenítése
+            storedToken.RevokedAt = DateTime.UtcNow;
+
+            // új token
+            var newRefreshToken = _jwtService.GenerateRefreshToken(
+                HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                Request.Headers["User-Agent"].ToString()
+            );
+
+            newRefreshToken.UserId = storedToken.UserId;
+            newRefreshToken.ReplacesToken = storedToken.Token;
+
+            _context.RefreshTokens.Add(newRefreshToken);
+
+            // új jwt
+            var jwt = _jwtService.GenerateToken(storedToken.User, rememberMe: false);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Token = jwt,
+                RefreshToken = newRefreshToken.Token
+            });
+        }
+
+        [HttpPost("logout")]
+        private  async Task<IActionResult> Logout([FromBody] RefreshRequestDto request)
+        {
+            if (string.IsNullOrEmpty(request.RefreshToken))
+                return BadRequest("Refresh token is required");
+
+            var storedToken = await _context.RefreshTokens
+                .SingleOrDefaultAsync(t => t.Token == request.RefreshToken);
+
+            if (storedToken == null)
+                return Unauthorized("Invalid refresh token");
+
+            if (!storedToken.IsActive)
+                return Unauthorized("Refresh token is already expired or revoked");
+
+            // Token érvénytelenítése
+            storedToken.RevokedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Logged out successfully" });
+        }
+
     }
 }

@@ -26,4 +26,6 @@ public class Group
 
     [ForeignKey(nameof(OrganisationId))]
     public Organisation Organisation { get; set; } = null!;
+
+    public ICollection<GroupUser> GroupUsers { get; set; } = new List<GroupUser>();
 }

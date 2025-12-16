@@ -26,5 +26,11 @@ public class User
     [MaxLength(255)]
     public string Password { get; set; } = null!;
 
+    // kapcsolat RefreshToken-rel
+    public ICollection<RefreshToken> RefreshTokens { get; set; }
+
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public ICollection<GroupUser> GroupUsers { get; set; } = new List<GroupUser>();
+    public ICollection<ChatRoomUser> ChatRoomUsers { get; set; } = new List<ChatRoomUser>();
+
 }

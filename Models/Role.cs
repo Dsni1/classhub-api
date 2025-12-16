@@ -4,7 +4,7 @@ using ClassHub.Models;
 
 namespace ClassHub.Models;
 
-[Table("Users")]
+[Table("Roles")]
 public class Role
 {
     [Key]

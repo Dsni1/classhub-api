@@ -3,64 +3,86 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Binders;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
 
-// JWT AUTHENTICATION SETUP
-var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// JW configuration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"],
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidateLifetime = true,
 
-        ValidateAudience = true,
-        ValidAudience = jwtSettings["Audience"],
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtSettings["Key"])
-        ),
+// DB configuration from env variables on server
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPass = Environment.GetEnvironmentVariable("DB_PASS");
 
-        ValidateLifetime = true
-    };
+string connectionString;
+
+if (dbHost == null || dbPort == null || dbName == null || dbUser == null || dbPass == null)
+{
+    connectionString = $"Server=127.0.0.1;Database=classhub;User=devnet;Password=X9f!2nP@8dQm4L;Port=3306;Protocol=Tcp;SslMode=None;";
+}
+
+else
+{
+  connectionString =
+    $"Server={dbHost};" +
+    $"Port={dbPort};" +
+    $"Database={dbName};" +
+    $"User={dbUser};" +
+    $"Password={dbPass};" +
+    $"Protocol=Tcp;" +
+    $"SslMode=None;";
+  
+}
+
+var dbVersionString =builder.Configuration["Database:Version"];
+
+var serverVersion = ServerVersion.Parse(dbVersionString);
+
+Console.WriteLine("Using connection string: " + connectionString);
+
+builder.Services.AddDbContext<ExternalDbContext>(options =>
+{
+    options.UseMySql(connectionString, serverVersion);
 });
 
-builder.Services.AddScoped<ClassHub.Services.JwtService>();
-
 // Add services to the container.
+builder.Services.AddScoped<ClassHub.Services.JwtService>();
+builder.Services.AddScoped<ClassHub.Services.OrganisationInviteService>();
 builder.Services.AddControllers();
 
-// MySQL DATABASE CONNECTION
-builder.Services.AddDbContext<ExternalDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("ExternalDb"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("ExternalDb"))
-    ));
-
-builder.WebHost.UseUrls("http://0.0.0.0:8080");
-
+// Build app
 var app = builder.Build();
 
-
-
-app.UseHttpsRedirection();
-app.UseAuthorization();
-
-app.MapControllers();
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 
 app.Run();
+
+
+//final test commit
