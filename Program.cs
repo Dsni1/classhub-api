@@ -7,9 +7,17 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 
-var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
-var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
-var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+
+var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
+    ?? throw new Exception("JWT_KEY environment variable is missing");
+
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER")
+    ?? throw new Exception("JWT_ISSUER environment variable is missing");
+
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+    ?? throw new Exception("JWT_AUDIENCE environment variable is missing");
+
+
 
 // JW configuration
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

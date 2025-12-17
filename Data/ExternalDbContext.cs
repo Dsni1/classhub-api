@@ -83,6 +83,13 @@ namespace ClassHub.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
+            modelBuilder.Entity<Group>()
+                .HasMany(g => g.GroupUsers)
+                .WithOne(gu => gu.Group)
+                .HasForeignKey(gu => gu.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Owner" },
                 new Role { Id = 2, Name = "Admin" },
