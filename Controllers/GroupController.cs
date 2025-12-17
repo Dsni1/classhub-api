@@ -28,6 +28,7 @@ namespace ClassHub.Controllers
 
         // POST: api/org/{orgId}/groups
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> CreateGroup(int orgId, [FromBody] CreateGroupDto dto)
         {
             var userId = int.Parse(User.FindFirstValue("userId")!);
@@ -85,6 +86,38 @@ namespace ClassHub.Controllers
                 .ToListAsync();
 
             return Ok(groups);
+        }
+
+        // POST: api/org/{orgId}/groups/{groupId}
+        [HttpDelete("{groupId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteGroup(int orgId, int groupId)
+        {
+            var userId = int.Parse(User.FindFirstValue("userId")!);
+
+            var group = await _context.Groups
+                .Include(g => g.GroupUsers)
+                .FirstOrDefaultAsync(g => g.Id == groupId && g.OrganisationId == orgId);
+
+            if (group == null)
+                return NotFound("A csoport nem létezik.");
+
+            var userRole = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.OrganisationId == orgId);
+
+            if (userRole == null)
+                return Forbid("Nem vagy a szervezet tagja.");
+
+            if (userRole.Role.Name != "Owner")
+                return Forbid("Nincs jogosultságod a csoport törléséhez");
+
+                
+            _context.Groups.Remove(group);
+            await _context.SaveChangesAsync();
+
+
+            return Ok(new { message = "A csoport sikeresen törölve.", groupId = group.Id });
         }
     }
 }

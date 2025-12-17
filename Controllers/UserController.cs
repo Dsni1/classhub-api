@@ -4,6 +4,7 @@ using ClassHub.Data;
 using ClassHub.Models;
 using ClassHub.DTOs;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ClassHub.Controllers
 {
@@ -35,57 +36,6 @@ namespace ClassHub.Controllers
             return Ok(users);
         }
 
-        // GET: api/users/{id}
-        [HttpGet("{id}")]
-        public IActionResult GetUserById(int id)
-        {
-            var user = _context.Users
-                .Where(u => u.Id == id)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.UserName
-                })
-                .FirstOrDefault();
-
-            if (user == null)
-                return NotFound("User not found");
-
-            return Ok(user);
-        }
-
-        // POST: api/users
-        [HttpPost]
-        public IActionResult CreateUser([FromBody] CreateUserDto dto)
-        {
-            if (string.IsNullOrWhiteSpace(dto.UserName) ||
-                string.IsNullOrWhiteSpace(dto.Password))
-            {
-                return BadRequest("Username and password are required");
-            }
-
-            if (_context.Users.Any(u => u.UserName == dto.UserName))
-            {
-                return BadRequest("Username already exists");
-            }
-
-            var user = new User
-            {
-                UserName = dto.UserName,
-            };
-
-            user.Password = _passwordHash.HashPassword(user, dto.Password);
-
-            _context.Users.Add(user);
-            _context.SaveChanges();
-
-            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, new
-            {
-                user.Id,
-                user.UserName
-            });
-        }
-
         // GET: api/users/{id}/organisations
         [HttpGet("{id}/organisations")]
         public IActionResult GetUserOrganisations(int id)
@@ -106,6 +56,31 @@ namespace ClassHub.Controllers
                 return NotFound("User has no organisations");
 
             return Ok(data);
+        }
+
+        [HttpDelete("me")]
+        [Authorize]
+        public async Task<IActionResult> DeleteUserAccount()
+        {
+            var userId = int.Parse(User.FindFirst("userId")!.Value);
+
+            var user = await _context.Users
+                .Include(u => u.UserRoles)
+                .Include(u => u.GroupUsers)
+                .Include(u => u.RefreshTokens)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound("User not found");
+
+            _context.UserRoles.RemoveRange(user.UserRoles);
+            _context.GroupUsers.RemoveRange(user.GroupUsers);
+            _context.RefreshTokens.RemoveRange(user.RefreshTokens);
+            _context.Users.Remove(user);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { Message = "User account deleted successfully" });
         }
     }
 }
