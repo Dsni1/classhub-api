@@ -6,7 +6,16 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY")
     ?? throw new Exception("JWT_KEY environment variable is missing");
@@ -84,6 +93,8 @@ builder.Services.AddControllers();
 var app = builder.Build();
 
 app.UseRouting();
+
+app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
