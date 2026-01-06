@@ -19,6 +19,7 @@ namespace ClassHub.Data
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<ChatRoomUser> ChatRoomUsers { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<MessageAttachment> MessageAttachments { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<OrganisationInvite> OrganisationInvites { get; set; }
 
@@ -89,6 +90,11 @@ namespace ClassHub.Data
                 .HasForeignKey(gu => gu.GroupId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<MessageAttachment>()
+                .HasOne(a => a.Message)
+                .WithMany(m => m.Attachments)
+                .HasForeignKey(a => a.MessageId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Role>().HasData(
                 new Role { Id = 1, Name = "Owner" },

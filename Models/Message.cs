@@ -17,13 +17,15 @@ public class Message
     [Column("user_id")]
     public int UserId { get; set; }
 
-    [Required]
     [Column("text")]
     [MaxLength(255)]
     public string Text { get; set; } = null!;
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
+
+    public ICollection<MessageAttachment> Attachments { get; set; } = new List<MessageAttachment>();
+
 }
 
 

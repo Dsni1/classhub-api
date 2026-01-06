@@ -92,6 +92,8 @@ builder.Services.AddControllers();
 // Build app
 var app = builder.Build();
 
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseCors("FrontendPolicy");
